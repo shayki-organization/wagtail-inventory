@@ -1,4 +1,6 @@
+from django.db.models import QuerySet
 from django.forms.widgets import SelectMultiple
+from django.http import HttpRequest, HttpResponse
 
 from wagtail.admin.auth import permission_denied
 from wagtail.admin.filters import ContentTypeFilter, WagtailFilterSet
@@ -10,7 +12,7 @@ import django_filters
 from wagtailinventory.models import PageBlock
 
 
-def get_block_choices():
+def get_block_choices() -> list[tuple[str, str]]:
     return [
         (page_block, page_block)
         for page_block in PageBlock.objects.distinct()
@@ -53,16 +55,16 @@ class BlockInventoryReportView(PageReportView):
     index_results_url_name = "wagtailinventory:block_inventory_report_results"
 
     @classmethod
-    def check_permissions(cls, request):
+    def check_permissions(cls, request: HttpRequest) -> bool:
         return request.user.is_superuser or request.user.has_perm(
             "wagtailinventory.view_pageblock"
         )
 
-    def dispatch(self, request, *args, **kwargs):
+    def dispatch(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
         if not self.check_permissions(request):
             return permission_denied(request)
         return super().dispatch(request, *args, **kwargs)
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet:
         self.queryset = Page.objects.order_by("title")
         return super().get_queryset()

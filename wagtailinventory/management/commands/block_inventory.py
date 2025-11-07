@@ -11,7 +11,7 @@ from wagtailinventory.helpers import (
 
 
 class Command(BaseCommand):
-    def handle(self, *args, **options):
+    def handle(self, *args, **options) -> None:
         delete_page_inventory()
 
         pages = Page.objects.all()

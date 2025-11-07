@@ -1,17 +1,20 @@
 from itertools import chain
 
+from django.db.models import QuerySet
+
 from wagtail.blocks import ListBlock, StreamBlock, StructBlock
 from wagtail.fields import StreamField
+from wagtail.models import Page
 
 from wagtailinventory.models import PageBlock
 
 
-def get_block_name(block):
+def get_block_name(block: object) -> str:
     return block.__module__ + "." + block.__class__.__name__
 
 
-def get_page_blocks(page):
-    blocks = []
+def get_page_blocks(page: Page) -> list[str]:
+    blocks: list = []
 
     for field in page.specific._meta.fields:
         if not isinstance(field, StreamField):
@@ -23,16 +26,16 @@ def get_page_blocks(page):
     return sorted(set(map(get_block_name, blocks)))
 
 
-def get_field_blocks(value):
-    block = getattr(value, "block", None)
-    blocks = [block] if block else []
+def get_field_blocks(value: object) -> list:
+    block: object | None = getattr(value, "block", None)
+    blocks: list = [block] if block else []
 
     if isinstance(block, StructBlock):
         if hasattr(value, "bound_blocks"):
             child_blocks = value.bound_blocks.values()
         else:
             child_blocks = [value.value]
-    elif isinstance(block, (ListBlock, StreamBlock)):
+    elif isinstance(block, ListBlock | StreamBlock):
         child_blocks = value.value
     else:
         child_blocks = []
@@ -42,7 +45,7 @@ def get_field_blocks(value):
     return blocks
 
 
-def get_page_inventory(page=None):
+def get_page_inventory(page: Page | None = None) -> QuerySet:
     inventory = PageBlock.objects.all()
 
     if page:
@@ -51,7 +54,7 @@ def get_page_inventory(page=None):
     return inventory
 
 
-def create_page_inventory(page):
+def create_page_inventory(page: Page) -> list[PageBlock]:
     page_blocks = get_page_blocks(page)
 
     return [
@@ -60,11 +63,11 @@ def create_page_inventory(page):
     ]
 
 
-def delete_page_inventory(page=None):
+def delete_page_inventory(page: Page | None = None) -> None:
     get_page_inventory(page).delete()
 
 
-def update_page_inventory(page):
+def update_page_inventory(page: Page) -> None:
     page_blocks = create_page_inventory(page)
 
     for page_block in get_page_inventory(page):
